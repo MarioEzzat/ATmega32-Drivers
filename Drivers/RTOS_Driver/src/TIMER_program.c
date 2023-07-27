@@ -1,0 +1,180 @@
+/*
+ * TIMER_program.c
+ *
+ *  Created on: Aug 18, 2022
+ *      Author: Mario Ezzat
+ */
+
+#include"../include/LIB/STD_TYPES.h"
+#include"../include/LIB/BIT_MATH.h"
+
+
+#include"../include/MCAL/DIO/DIO_interface.h"
+
+#include "../include/MCAL/TIMER/TIMER_interface.h"
+#include "../include/MCAL/TIMER/TIMER_private.h"
+#include "../include/MCAL/TIMER/TIMER_configuration.h"
+
+
+
+/****************************************************/
+/* 						TIMER0						*/
+/****************************************************/
+void MTIMER0_voidInit(void)
+{
+	#if TIMER_MODE == NORMAL_MODE
+		/* SET WAVE GENERATION MODE TO NORMAL MODE */
+		CLR_BIT(TCCR0,3);
+		CLR_BIT(TCCR0,6);
+		/* TURN ON OVER-FLOW INTERRUPT */
+		SET_BIT(TIMSK,0);
+		/* PRESCALER CLK */
+		TCCR0 &= 0b11111000;
+		TCCR0 |= CLK_CONFIGURATION;
+
+	#elif TIMER_MODE == PHASE_CORRECT_MODE
+
+	#elif TIMER_MODE == CTC_MODE
+		/* SET WAVE GENERATION MODE TO CTC_MODE */
+		CLR_BIT(TCCR0,3);
+		SET_BIT(TCCR0,6);
+		/* TURN ON OVER-FLOW INTERRUPT */
+		SET_BIT(TIMSK,1);
+		/*SET ON COMPARE MATCH VALUE*/
+		OCR0 = OCR0_VALUE;
+		/* SET CLK (PRESCALER) & OC0 PIN ACTION */
+		TCCR0 &= 0b11001000;
+		TCCR0 |= CLK_CONFIGURATION_TIMER0 | (CTC_OC0_PIN_ACTION << 4);
+	#elif TIMER_MODE == FAST_PWM_MODE
+		/* SET WAVE GENERATION MODE TO FASR_PWM_MODE */
+		SET_BIT(TCCR0,3);
+		SET_BIT(TCCR0,6);
+		/*SET ON COMPARE MATCH VALUE*/
+		OCR0 = OCR0_VALUE;
+		/* SET CLK (PRESCALER) & OC0 PIN ACTION */
+		TCCR0 &= 0b11001000;
+		TCCR0 |= CLK_CONFIGURATION_TIMER0 | (FAST_PWM_OC0_PIN_ACTION << 4);
+
+	#else
+			#error WRONG TIMER MODE CONFIGURATION
+	#endif
+}
+void MTIMER0_voidStopTimer(void)
+{
+	/* STOP CLK */
+	/*PRESCALER CLK*/
+	TCCR0 &= 0b11111000;
+	TCCR0 |= 0b000;
+}
+
+void MTIMER0_voidSetPreloadValue(u8 A_u8PreloadValue)
+{
+	TCNT0 = A_u8PreloadValue;
+}
+/*SET OCR0 VALUE ON REAL-TIME*/
+void MTIMER0_voidSetOCR0Value(u8 A_u8OCR0Value)
+{
+	OCR0 = A_u8OCR0Value;
+}
+
+
+/* INTERRUPT NORMAL MODE */
+void (*TIMER0_OVF_CallBack)(void) = NULL;
+
+void MTIMER0_voidSetCallBackOVF(void (*PtrToFunction)(void))
+{
+	if(PtrToFunction != NULL)
+	{
+	 TIMER0_OVF_CallBack = PtrToFunction;
+	}
+}
+void __vector_11(void)  __attribute__((signal));
+void __vector_11(void)
+{
+	if(TIMER0_OVF_CallBack != NULL)
+	{
+		TIMER0_OVF_CallBack();
+	}
+}
+
+/* INTERRUPT CTC MODE */
+void (*TIMER0_CTC_CallBack)(void) = NULL;
+
+void MTIMER0_voidSetCallBackCTC(void (*PtrToFunction)(void))
+{
+	if(PtrToFunction != NULL)
+	{
+	 TIMER0_CTC_CallBack = PtrToFunction;
+	}
+}
+void __vector_10(void)  __attribute__((signal));
+void __vector_10(void)
+{
+	if(TIMER0_CTC_CallBack != NULL)
+	{
+		TIMER0_CTC_CallBack();
+	}
+}
+/****************************************************/
+/* 						TIMER1						*/
+/****************************************************/
+void MTIMER1_voidInit(void)
+{
+	#if TIMER1_MODE == NORMAL_MODE
+		/* SET WAVE GENERATION MODE TO NORMAL MODE */
+		CLR_BIT(TCCR1A,0);
+		CLR_BIT(TCCR1A,1);
+		CLR_BIT(TCCR1B,3);
+		CLR_BIT(TCCR1B,4);
+		/* SET CLK (PRESCALER) & OC1A PIN ACTION */
+		TCCR1A &= 0b10000011;
+		TCCR1A |= (FAST_PWM_OC1A_PIN_ACTION << 6);
+		TCCR1A |= (FAST_PWM_OC1B_PIN_ACTION << 4);
+		/* SET CLK (PRESCALER)  */
+		TCCR1B &= 0b10011000;
+		TCCR1B |= CLK_CONFIGURATION_TIMER1 ;
+	#elif TIMER1_MODE == FAST_PWM_ICR1
+		/* SET WAVE GENERATION MODE TO NORMAL MODE */
+		CLR_BIT(TCCR1A,0);
+		SET_BIT(TCCR1A,1);
+		SET_BIT(TCCR1B,3);
+		SET_BIT(TCCR1B,4);
+		/* SET OC1A PIN ACTION */
+		TCCR1A &= 0b10000011;
+		TCCR1A |= (FAST_PWM_OC1A_PIN_ACTION << 6);
+		/*SET OC1B PIN ACTION*/
+		TCCR1A |= (FAST_PWM_OC1B_PIN_ACTION << 4);
+		/*ICR1 VALUE*/
+		ICR1 = ICR1_VALUE;
+		/* SET CLK (PRESCALER) */
+		TCCR1B &= 0b10011000;
+		TCCR1B |= CLK_CONFIGURATION_TIMER1 ;
+	#endif
+}
+/*SET OCR0 VALUE ON REAL-TIME*/
+void MTIMER1_voidSetOCR1AValue(u16 A_u16OCR1AValue)
+{
+	OCR1A = A_u16OCR1AValue;
+}
+void MTIMER1_voidSetOCR1BValue(u16 A_u16OCR1BValue)
+{
+	OCR1B = A_u16OCR1BValue;
+}
+
+/****************************************************/
+/* 					WATCH DOG TIMER					*/
+/****************************************************/
+void MWDT_voidEnable()
+{
+	/*SET WDE BIT & CLEAR WDTOE BIT*/
+	SET_BIT(WDTCR,WDE);
+	/*SET THE PRESCALER VALUE*/
+	WDTCR |= WDT_PRESCALER_SLECT;
+}
+void MWDT_voidDisable()
+{
+	/*SET WDE BIT & SET WDTOE BIT*/
+	SET_BIT(WDTCR,WDE);
+	SET_BIT(WDTCR,WDTOE);
+	WDTCR = 0x00;
+}

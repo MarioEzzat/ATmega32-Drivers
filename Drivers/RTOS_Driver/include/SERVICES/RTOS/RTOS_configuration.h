@@ -1,0 +1,13 @@
+/*
+ * RTOS_configuration.h
+ *
+ *  Created on: Sep 2, 2022
+ *      Author: Mario Ezzat
+ */
+
+#ifndef INCLUDE_SERVICES_RTOS_RTOS_CONFIGURATION_H_
+#define INCLUDE_SERVICES_RTOS_RTOS_CONFIGURATION_H_
+/*RTOS_MAX_NUMBER_OF_TASKS :- 1..2..3....*/
+#define RTOS_MAX_NUMBER_OF_TASKS 3
+
+#endif /* INCLUDE_SERVICES_RTOS_RTOS_CONFIGURATION_H_ */
